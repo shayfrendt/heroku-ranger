@@ -39,7 +39,11 @@ module Heroku::Command
 
     def domains
       if args.empty?
+        # List out current domains being monitored
         puts "List of domains - WIP"
+        domains = heroku.list_domains(app)
+        puts "Domains: #{domains}"
+        return
       end
 
       case args.shift
