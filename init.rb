@@ -10,9 +10,10 @@ module Heroku::Command
       group.command "ranger:domains add <url>",    "start monitoring a domain"
       group.command "ranger:domains remove <url>", "stop monitoring a domain"
       group.command "ranger:domains clear",        "stop monitoring all domains"
-      # group.command "ranger:alerts",               "list current alert email addresses"
-      # group.command "ranger:alerts add <email>",   "add an alert email address"
-      # group.command "ranger:alerts remove <email>",   "remove an alert email address"
+      group.command "ranger:watchers",               "list current app watchers"
+      group.command "ranger:watchers add <email>",   "add an app watcher"
+      group.command "ranger:watchers remove <email>",   "remove an app watcher"
+      group.command "ranger:watchers clear",        "remove all app watchers"
     end
     
     def initialize(*args)
@@ -41,10 +42,8 @@ module Heroku::Command
           code = record["dependency"]["latest_response_code"]
           puts "#{url} #{up_or_down(code)}"
         end
-        puts ""
         
-        # puts "\nAlert Recipients:"
-        # puts " #{@app_owner}"
+        watchers_list
       else
         no_domains_monitored
       end
@@ -122,6 +121,14 @@ module Heroku::Command
         delete_dependency(record["dependency"]["id"])
       end
     end
+    
+    def clear_all_watchers
+      watchers = get_watchers
+      
+      watchers.each do |record|
+        delete_watcher(record["watcher"]["id"])
+      end
+    end
 
     def no_domains_monitored
       puts "\n---------------------------------------------"
@@ -149,7 +156,62 @@ module Heroku::Command
       end
     end
 
+    def get_watchers
+      resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers.json?api_key=#{@ranger_api_key}")
+      @current_watchers = JSON.parse(resource.get)
+    end
 
+    def watchers_list
+      get_watchers
+      
+      puts "\nApp Watchers"
+      puts "------------------------------------------"
+
+      @current_watchers.each do |record|
+        email = record["watcher"]["email"]
+        puts "#{email}"
+      end
+      puts ""
+    end
+    
+    def create_watcher(email)
+      resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers.json")
+      params = { :watcher => { :email => email }, :api_key => @ranger_api_key}
+      resource.post(params)
+    end
+    
+    def remove_watcher(email)
+      if delete_watcher_from_email(email)
+        puts "Removed #{email} as a watcher"
+      else
+        puts "No watchers with that email found in the watcher list"
+      end
+    end
+    
+    def delete_watcher_from_email(email)
+      watchers = get_watchers
+      
+      watcher_id = nil
+      watchers.each do |record|
+        if record["watcher"]["email"] == email
+          watcher_id = record["watcher"]["id"]
+          delete_watcher(watcher_id)
+        end
+      end
+      return false if watcher_id.nil?
+      return true
+    end
+
+    def delete_watcher(id)
+      resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers/#{id}.json?api_key=#{@ranger_api_key}")
+
+      begin
+        resource.delete
+      rescue RestClient::ResourceNotFound => e
+        false
+      end
+    end
+    
     def domains
       if args.empty?
         domain_list
@@ -174,27 +236,29 @@ module Heroku::Command
       raise(CommandFailed, "usage: heroku ranger:domains <add | remove | clear>")
     end
 
-    # def alerts
-    #   if args.empty?
-    #     # List current email addresses
-    #     puts "Alert email addresses - WIP"
-    #     return
-    #   end
+    def watchers
+      if args.empty?
+        watchers_list
+        return
+      end
 
-    #   case args.shift
-    #     when "add"
-    #       email = args.shift
-    #       # Add email address
-    #       puts "Added #{email} as an alert recipient"
-    #       return
-    #     when "remove"
-    #       email = args.shift
-    #       # Remove email address 
-    #       puts "Removed #{email} as an alert recipient"
-    #       return
-    #   end
-    #   raise(CommandFailed, "usage: heroku ranger:alerts <add | remove>")
-    # end
+      case args.shift
+        when "add"
+          email = args.shift
+          create_watcher(email)
+          puts "Added #{email} as a watcher"
+          return
+        when "remove"
+          email = args.shift
+          remove_watcher(email)
+          return
+        when "clear"
+          clear_all_watchers
+          puts "All watchers removed"
+          return
+      end
+      raise(CommandFailed, "usage: heroku ranger:watchers <add | remove | clear>")
+    end
 
   end
 end
