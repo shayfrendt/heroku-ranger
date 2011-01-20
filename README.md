@@ -5,7 +5,8 @@ This is a Heroku plug-in for the Ranger web service. The Ranger Heroku integrati
 NOTE:  This is spike-quality code.  Check out the [[refactor branch|https://github.com/shayfrendt/heroku-ranger/tree/refactor]] if you want to see tests and such.
 
 ## Add addon
-  
+ 
+    heroku plugins:install git@github.com:shayfrendt/heroku-ranger.git
     heroku addons:add ranger
 
 ## Monitor your domain
