@@ -1,7 +1,3 @@
-# TODO
-# owner = heroku.info(app)[:owner]
-# domain = app
-
 module Heroku::Command
   class Ranger < BaseWithApp
     Help.group("Ranger") do |group|

@@ -1,8 +1,14 @@
-## Add addon
-  heroku addons:add ranger:test
-  
-## Tell Ranger who to send alerts to
-  heroku ranger:alerts add bob@example.com
+# Heroku Ranger Plug-in
 
-## Tell Ranger which domain to monitor
-  heroku ranger:domains add http://yourapp.heroku.com
+This is a Heroku plug-in for the Ranger web service. The Ranger Heroku integration is currently in private alpha.
+
+NOTE:  This is spike-quality code.  Check out the [[refactor branch|https://github.com/shayfrendt/heroku-ranger/tree/refactor]] if you want to see tests and such.
+
+## Add addon
+  
+    heroku addons:add ranger
+
+## Monitor your domain
+
+    heroku ranger:domains add http://www.example.com
+    heroku ranger:watchers add jon-doe@example.com
