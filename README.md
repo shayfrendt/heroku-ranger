@@ -2,7 +2,7 @@
 
 This is a Heroku plug-in for the Ranger web service. The Ranger Heroku integration is currently in private alpha.
 
-NOTE:  This is spike-quality code.  Check out the __refactor__ if you want to see tests and such.
+NOTE:  This is spike-quality code.  Check out the __refactor__ branch if you want to see tests and such.
 
 ## Add addon
  
