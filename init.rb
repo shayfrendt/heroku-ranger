@@ -1,3 +1,9 @@
+begin
+  require 'json'
+rescue LoadError
+  raise "json gem is missing.  Please install json: gem install json"
+end
+
 module Heroku::Command
   class Ranger < BaseWithApp
     Help.group("Ranger") do |group|
