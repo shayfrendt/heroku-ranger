@@ -9,7 +9,7 @@ NOTE:  This is spike-quality code.  Check out the __refactor__ branch if you wan
     heroku plugins:install git@github.com:shayfrendt/heroku-ranger.git
     heroku addons:add ranger
 
-## Monitor your domain
+## View available commands
 
-    heroku ranger:domains add http://www.example.com
-    heroku ranger:watchers add jon-doe@example.com
+    heroku help ranger
+
