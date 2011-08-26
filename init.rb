@@ -6,18 +6,6 @@ end
 
 module Heroku::Command
   class Ranger < BaseWithApp
-    Help.group("Ranger") do |group|
-      group.command "ranger",                      "show current app status"
-      group.command "ranger:domains",              "list domains being monitored"
-      group.command "ranger:domains add <url>",    "start monitoring a domain"
-      group.command "ranger:domains remove <url>", "stop monitoring a domain"
-      group.command "ranger:domains clear",        "stop monitoring all domains"
-      group.command "ranger:watchers",               "list current app watchers"
-      group.command "ranger:watchers add <email>",   "add an app watcher"
-      group.command "ranger:watchers remove <email>",   "remove an app watcher"
-      group.command "ranger:watchers clear",        "remove all app watchers"
-    end
-    
     def initialize(*args)
       super
       @config_vars = heroku.config_vars(app)
@@ -26,12 +14,11 @@ module Heroku::Command
       @app_owner = heroku.info(app)[:owner]
       abort(" !   Please add the ranger addon first.") unless @ranger_api_key
     end
-    
-    def authenticated_resource(path)
-      host = "https://rangerapp.com/api/v1"
-      RestClient::Resource.new("#{host}#{path}")
-    end
 
+    # ranger
+    #
+    # show current app status
+    #
     def index
       if get_status
         dependencies = @current_status
@@ -49,6 +36,125 @@ module Heroku::Command
       else
         no_domains_monitored
       end
+    end
+
+    # ranger:domains
+    #
+    # list domains being monitored
+    #
+    def domains
+      if args.empty?
+        domain_list
+        return
+      end
+      
+      case args.shift
+        when "add"
+          url = args.shift
+          create_dependency(url)
+          puts "Added #{url} to the monitoring list"
+          return
+        when "remove"
+          url = args.shift
+          remove_url(url)
+          return
+        when "clear"
+          clear_all_dependencies
+          puts "All domains removed from the monitoring list"
+          return
+      end
+      raise(CommandFailed, "see: heroku help ranger")
+    end
+
+    # ranger:add_domain DOMAIN
+    #
+    # start monitoring a domain
+    #
+    def add_domain
+      url = args.shift
+      create_dependency(url)
+      puts "Added #{url} to the monitoring list"
+    end
+
+    # ranger:remove_domain DOMAIN
+    #
+    # stop monitoring a domain
+    #
+    def remove_domain
+      url = args.shift
+      remove_url(url)
+    end
+
+    # ranger:clear_domains
+    #
+    # stop monitoring all domains
+    #
+    def clear_domains
+      clear_all_dependencies
+      puts "All domains removed from the monitoring list"
+    end
+
+    # ranger:watchers
+    #
+    # list current app watchers
+    #
+    def watchers
+      if args.empty?
+        watchers_list
+        return
+      end
+
+      case args.shift
+        when "add"
+          email = args.shift
+          create_watcher(email)
+          puts "Added #{email} as a watcher"
+          return
+        when "remove"
+          email = args.shift
+          remove_watcher(email)
+          return
+        when "clear"
+          clear_all_watchers
+          puts "All watchers removed"
+          return
+      end
+      raise(CommandFailed, "see: heroku help ranger")
+    end
+
+    # ranger:add_watcher EMAIL
+    #
+    # add a watcher
+    #
+    def add_watcher
+      email = args.shift
+      create_watcher(email)
+      puts "Added #{email} as a watcher"
+    end
+
+    # ranger:remove_watcher EMAIL
+    #
+    # remove a watcher
+    #
+    def remove_watcher
+      email = args.shift
+      remove_watcher(email)
+    end
+
+    # ranger:clear_watchers
+    #
+    # remove all watchers
+    #
+    def clear_watchers
+      clear_all_watchers
+      puts "All watchers removed"
+    end
+
+    protected
+
+    def authenticated_resource(path)
+      host = "https://rangerapp.com/api/v1"
+      RestClient::Resource.new("#{host}#{path}")
     end
 
     def up_or_down(code)
@@ -137,7 +243,7 @@ module Heroku::Command
       puts "No domains are being monitored for this app."
       puts "-----------------------------------------------"
       puts "\nMonitor a domain like this:"
-      puts "\n  heroku ranger:domains add http://yourapp.heroku.com\n\n"
+      puts "\n  heroku ranger:add_domain http://yourapp.heroku.com\n\n"
     end
 
     def domain_list
@@ -213,54 +319,5 @@ module Heroku::Command
         false
       end
     end
-    
-    def domains
-      if args.empty?
-        domain_list
-        return
-      end
-      
-      case args.shift
-        when "add"
-          url = args.shift
-          create_dependency(url)
-          puts "Added #{url} to the monitoring list"
-          return
-        when "remove"
-          url = args.shift
-          remove_url(url)
-          return
-        when "clear"
-          clear_all_dependencies
-          puts "All domains removed from the monitoring list"
-          return
-      end
-      raise(CommandFailed, "usage: heroku ranger:domains <add | remove | clear>")
-    end
-
-    def watchers
-      if args.empty?
-        watchers_list
-        return
-      end
-
-      case args.shift
-        when "add"
-          email = args.shift
-          create_watcher(email)
-          puts "Added #{email} as a watcher"
-          return
-        when "remove"
-          email = args.shift
-          remove_watcher(email)
-          return
-        when "clear"
-          clear_all_watchers
-          puts "All watchers removed"
-          return
-      end
-      raise(CommandFailed, "usage: heroku ranger:watchers <add | remove | clear>")
-    end
-
   end
 end
