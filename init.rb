@@ -166,9 +166,9 @@ module Heroku::Command
       resource = authenticated_resource("/status/#{@ranger_app_id}?api_key=#{@ranger_api_key}")
 
       begin
-        @current_status = Heroku::API::OkJson.decode(resource.get)
+        @current_status = Heroku::OkJson.decode(resource.get)
         true
-      rescue Heroku::API::OkJson::Error => e
+      rescue Heroku::OkJson::Error => e
         false
       end
     end
@@ -193,7 +193,7 @@ module Heroku::Command
     end
 
     def delete_dependency_from_url(url)
-      dependencies = Heroku::API::OkJson.decode(get_dependencies)
+      dependencies = Heroku::OkJson.decode(get_dependencies)
 
       dependency_id = nil
       dependencies.each do |record|
@@ -217,7 +217,7 @@ module Heroku::Command
     end
 
     def clear_all_dependencies
-      dependencies = Heroku::API::OkJson.decode(get_dependencies)
+      dependencies = Heroku::OkJson.decode(get_dependencies)
 
       dependencies.each do |record|
         delete_dependency(record["dependency"]["id"])
@@ -260,7 +260,7 @@ module Heroku::Command
 
     def get_watchers
       resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers.json?api_key=#{@ranger_api_key}")
-      @current_watchers = Heroku::API::OkJson.decode(resource.get)
+      @current_watchers = Heroku::OkJson.decode(resource.get)
     end
 
     def watchers_list
