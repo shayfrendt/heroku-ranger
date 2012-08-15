@@ -1,9 +1,3 @@
-begin
-  require 'json'
-rescue LoadError
-  raise "json gem is missing.  Please install json: gem install json"
-end
-
 module Heroku::Command
   class Ranger < BaseWithApp
     def initialize(*args)
@@ -22,7 +16,7 @@ module Heroku::Command
     def index
       if get_status
         dependencies = @current_status
-        
+
         puts "\nRanger Status"
         puts "------------------------------------------"
 
@@ -31,7 +25,7 @@ module Heroku::Command
           code = record["dependency"]["latest_response_code"]
           puts "#{url} #{up_or_down(code)}"
         end
-        
+
         watchers_list
       else
         no_domains_monitored
@@ -47,7 +41,7 @@ module Heroku::Command
         domain_list
         return
       end
-      
+
       case args.shift
         when "add"
           url = args.shift
@@ -172,9 +166,9 @@ module Heroku::Command
       resource = authenticated_resource("/status/#{@ranger_app_id}?api_key=#{@ranger_api_key}")
 
       begin
-        @current_status = JSON.parse(resource.get)
+        @current_status = Heroku::OkJson.decode(resource.get)
         true
-      rescue RestClient::ResourceNotFound => e
+      rescue Heroku::OkJson::Error => e
         false
       end
     end
@@ -189,7 +183,7 @@ module Heroku::Command
       params = { :dependency => { :name => "Website", :url => url, :check_every => "1" }, :api_key => @ranger_api_key}
       resource.post(params)
     end
-    
+
     def remove_url(url)
       if delete_dependency_from_url(url)
         puts "Removed #{url} from the monitoring list"
@@ -199,8 +193,8 @@ module Heroku::Command
     end
 
     def delete_dependency_from_url(url)
-      dependencies = JSON.parse(get_dependencies)
-      
+      dependencies = Heroku::OkJson.decode(get_dependencies)
+
       dependency_id = nil
       dependencies.each do |record|
         if record["dependency"]["url"] == url
@@ -223,16 +217,16 @@ module Heroku::Command
     end
 
     def clear_all_dependencies
-      dependencies = JSON.parse(get_dependencies)
-      
+      dependencies = Heroku::OkJson.decode(get_dependencies)
+
       dependencies.each do |record|
         delete_dependency(record["dependency"]["id"])
       end
     end
-    
+
     def clear_all_watchers
       watchers = get_watchers
-      
+
       watchers.each do |record|
         delete_watcher(record["watcher"]["id"])
       end
@@ -249,7 +243,7 @@ module Heroku::Command
     def domain_list
       if get_status
         dependencies = @current_status
-        
+
         puts "\nDomains Being Monitored"
         puts "------------------------------------------"
 
@@ -266,12 +260,12 @@ module Heroku::Command
 
     def get_watchers
       resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers.json?api_key=#{@ranger_api_key}")
-      @current_watchers = JSON.parse(resource.get)
+      @current_watchers = Heroku::OkJson.decode(resource.get)
     end
 
     def watchers_list
       get_watchers
-      
+
       puts "\nApp Watchers"
       puts "------------------------------------------"
 
@@ -281,13 +275,13 @@ module Heroku::Command
       end
       puts ""
     end
-    
+
     def create_watcher(email)
       resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers.json")
       params = { :watcher => { :email => email }, :api_key => @ranger_api_key}
       resource.post(params)
     end
-    
+
     def remove_watcher(email)
       if delete_watcher_from_email(email)
         puts "Removed #{email} as a watcher"
@@ -295,10 +289,10 @@ module Heroku::Command
         puts "No watchers with that email found in the watcher list"
       end
     end
-    
+
     def delete_watcher_from_email(email)
       watchers = get_watchers
-      
+
       watcher_id = nil
       watchers.each do |record|
         if record["watcher"]["email"] == email
