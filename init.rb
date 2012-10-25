@@ -106,7 +106,7 @@ module Heroku::Command
           return
         when "remove"
           email = args.shift
-          remove_watcher(email)
+          delete_watcher_from_email(email)
           return
         when "clear"
           clear_all_watchers
