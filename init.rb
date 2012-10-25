@@ -106,7 +106,7 @@ module Heroku::Command
           return
         when "remove"
           email = args.shift
-          delete_watcher_from_email(email)
+          delete_watcher(email)
           return
         when "clear"
           clear_all_watchers
@@ -132,7 +132,12 @@ module Heroku::Command
     #
     def remove_watcher
       email = args.shift
-      remove_watcher(email)
+
+      if delete_watcher_from_email(email)
+        puts "Removed #{email} as a watcher"
+      else
+        puts "No watchers with that email found in the watcher list"
+      end
     end
 
     # ranger:clear_watchers
@@ -228,7 +233,7 @@ module Heroku::Command
       watchers = get_watchers
 
       watchers.each do |record|
-        delete_watcher(record["watcher"]["id"])
+        delete_watcher_from_id(record["watcher"]["id"])
       end
     end
 
@@ -282,7 +287,7 @@ module Heroku::Command
       resource.post(params)
     end
 
-    def remove_watcher(email)
+    def delete_watcher(email)
       if delete_watcher_from_email(email)
         puts "Removed #{email} as a watcher"
       else
@@ -304,7 +309,7 @@ module Heroku::Command
       return true
     end
 
-    def delete_watcher(id)
+    def delete_watcher_from_id(id)
       resource = authenticated_resource("/apps/#{@ranger_app_id}/watchers/#{id}.json?api_key=#{@ranger_api_key}")
 
       begin
