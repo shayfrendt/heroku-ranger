@@ -160,6 +160,8 @@ module Heroku::Command
       case code
       when 200
         "is UP"
+      when 301
+        "is UP!"
       when nil
         "=> not checked yet"
       else
